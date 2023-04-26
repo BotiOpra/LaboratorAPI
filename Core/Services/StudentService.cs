@@ -44,6 +44,8 @@ namespace Core.Services
 		public string Validate(LoginDto payload)
 		{
 			var student = unitOfWork.Students.GetByEmail(payload.Email);
+			if (student == null)
+				return null;
 
 			var passwordFine = authService.VerifyHashedPassword(student.PasswordHash, payload.Password);
 
