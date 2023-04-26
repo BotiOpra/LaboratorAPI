@@ -9,91 +9,116 @@ namespace Core.Services
 {
     public class StudentService
     {
-        private readonly UnitOfWork unitOfWork;
+		private readonly UnitOfWork unitOfWork;
+		private AuthorizationService authService;
 
-        public StudentService(UnitOfWork unitOfWork)
-        {
-            this.unitOfWork = unitOfWork;
-        }
+		public StudentService(UnitOfWork unitOfWork, AuthorizationService authorizationService)
+		{
+			this.unitOfWork = unitOfWork;
+			this.authService = authorizationService;
+		}
 
-        public StudentAddDto AddStudent(StudentAddDto payload)
-        {
-            if (payload == null) return null;
+		public void Register(StudentRegisterDto registerData)
+		{
+			if (registerData == null)
+			{
+				return;
+			}
 
-            var existingClass = unitOfWork.Classes.GetById(payload.ClassId);
-            if (existingClass == null) return null;
+			var hashedPassword = authService.HashPassword(registerData.Password);
 
-            var newStudent = new Student
-            {
-                FirstName = payload.FirstName,
-                LastName = payload.LastName,
-                DateOfBirth = payload.DateOfBirth,
-                Address = payload.Address,
+			var student = new Student
+			{
+				FirstName = registerData.FirstName,
+				LastName = registerData.LastName,
+				Email = registerData.Email,
+				PasswordHash = hashedPassword,
+				ClassId = registerData.ClassId,
+				UserRole = new Role("Student")
+			};
 
-                ClassId = existingClass.Id
-            };
+			unitOfWork.Students.Insert(student);
+			unitOfWork.SaveChanges();
+		}
 
-            unitOfWork.Students.Insert(newStudent);
-            unitOfWork.SaveChanges();
+		public string Validate(LoginDto payload)
+		{
+			var student = unitOfWork.Students.GetByEmail(payload.Email);
 
-            return payload;
-        }
+			var passwordFine = authService.VerifyHashedPassword(student.PasswordHash, payload.Password);
 
-        public List<Student> GetAll()
-        {
-            var results = unitOfWork.Students.GetAll();
+			if (passwordFine)
+			{
+				var role = GetRole(student);
 
-            return results;
-        }
+				return authService.GetToken(student);
+			}
+			else
+			{
+				return null;
+			}
+		}
 
-        public StudentDto GetById(int studentId)
-        {
-            var student = unitOfWork.Students.GetById(studentId);
+		public Role GetRole(User user)
+		{
+			return user.UserRole;
+		}
 
-            var result = student.ToStudentDto();
+		public List<Student> GetAll()
+		{
+			var results = unitOfWork.Students.GetAll();
 
-            return result;
-        }
+			return results;
+		}
 
-        public bool EditName(StudentUpdateDto payload)
-        {
-            if (payload == null || payload.FirstName == null || payload.LastName == null)
-            {
-                return false;
-            }
+		public StudentDto GetById(int studentId)
+		{
+			var student = unitOfWork.Students.GetById(studentId);
 
-            var result = unitOfWork.Students.GetById(payload.Id);
-            if (result == null) return false;
+			var result = student.ToStudentDto();
 
-            result.FirstName = payload.FirstName;
-            result.LastName = payload.LastName;
+			return result;
+		}
 
-            return true;
-        }
+		public bool EditName(StudentUpdateDto payload)
+		{
+			if (payload == null || payload.FirstName == null || payload.LastName == null)
+			{
+				return false;
+			}
 
-        public GradesByStudent GetGradesById(int studentId, CourseType courseType)
-        {
-            var studentWithGrades = unitOfWork.Students.GetByIdWithGrades(studentId, courseType);
-            
-            var result = new GradesByStudent(studentWithGrades);
+			var result = unitOfWork.Students.GetById(payload.Id);
+			if (result == null) return false;
 
-            return result;
-        }
+			result.FirstName = payload.FirstName;
+			result.LastName = payload.LastName;
 
-        public List<string> GetClassStudents(int classId)
-        {
-            var students = unitOfWork.Students.GetClassStudents(classId);
+			return true;
+		}
 
-            //var results = students.ToStudentDtos();
+		public GradesByStudent GetGradesById(int studentId, CourseType courseType)
+		{
+			var studentWithGrades = unitOfWork.Students.GetByIdWithGrades(studentId, courseType);
 
-            return students;
-        }
+			var result = new GradesByStudent(studentWithGrades);
 
-        public Dictionary<int, List<Student>> GetGroupedStudents()
-        {
-            var results = unitOfWork.Students.GetGroupedStudents();
+			return result;
+		}
 
-            return results;
-        }
-    }
+		public List<string> GetClassStudents(int classId)
+		{
+			var students = unitOfWork.Students.GetClassStudents(classId);
+
+			//var results = students.ToStudentDtos();
+
+			return students;
+		}
+
+		public Dictionary<int, List<Student>> GetGroupedStudents()
+		{
+			var results = unitOfWork.Students.GetGroupedStudents();
+
+			return results;
+		}
+	}
 }

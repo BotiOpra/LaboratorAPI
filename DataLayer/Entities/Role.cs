@@ -8,6 +8,10 @@ namespace DataLayer.Entities
 {
 	public class Role
 	{
-		
+		public string Description { get; set; }
+		public Role(string description)
+		{
+			Description = description;
+		}
 	}
 }

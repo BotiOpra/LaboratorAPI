@@ -2,91 +2,133 @@
 using Core.Services;
 using DataLayer.Dtos;
 using DataLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Project.Controllers
 {
-    [ApiController]
-    [Route("api/students")]
-    public class StudentsController : ControllerBase
-    {
-        private StudentService studentService { get; set; }
+	[ApiController]
+	[Route("api/students")]
+	[Authorize]
+	public class StudentsController : ControllerBase
+	{
+		private StudentService studentService { get; set; }
 
 
-        public StudentsController(StudentService studentService)
-        {
-            this.studentService = studentService;
-        }
+		public StudentsController(StudentService studentService)
+		{
+			this.studentService = studentService;
+		}
 
-        [HttpPost("/add")]
-        public IActionResult Add(StudentAddDto payload)
-        {
-            var result = studentService.AddStudent(payload);
+		[HttpPost("/register")]
+		[AllowAnonymous]
+		public IActionResult Register(StudentRegisterDto payload)
+		{
+			studentService.Register(payload);
+			return Ok();
+		}
 
-            if (result == null)
-            {
-                return BadRequest("Student cannot be added");
-            }
+		[HttpPost("/login")]
+		[AllowAnonymous]
+		public IActionResult Login(LoginDto payload)
+		{
+			var jwtToken = studentService.Validate(payload);
 
-            return Ok(result);
-        }
+			return Ok(new { token = jwtToken });
+		}
+
+		[HttpGet("test-auth")]
+		public IActionResult TestLogin()
+		{
+
+			ClaimsPrincipal user = User;
+
+			var result = "";
+
+			foreach (var claim in user.Claims)
+			{
+				result += claim.Type + " : " + claim.Value + "\n";
+			}
 
 
-        [HttpGet("/get-all")]
-        public ActionResult<List<Student>> GetAll()
-        {
-            var results = studentService.GetAll();
 
-            return Ok(results);
-        }
+			var hasRole_user = user.IsInRole("User");
+			var hasRole_teacher = user.IsInRole("Teacher");
 
-        [HttpGet("/get/{studentId}")]
-        public ActionResult<Student> GetById(int studentId)
-        {
-            var result = studentService.GetById(studentId);
+			return Ok(result);
+		}
 
-            if(result == null)
-            {
-                return BadRequest("Student not fount");
-            }
+		[HttpGet("students-only")]
+		[Authorize(Roles = "Student")]
+		public ActionResult<string> HelloStudents()
+		{
+			return Ok("Hello students!");
+		}
 
-            return Ok(result);
-        }
+		[HttpGet("teacher-only")]
+		[Authorize(Roles = "Teacher")]
+		public ActionResult<string> HelloTeachers()
+		{
+			return Ok("Hello teachers!");
+		}
 
-        [HttpPatch("edit-name")]
-        public ActionResult<bool> GetById([FromBody] StudentUpdateDto studentUpdateModel)
-        {
-            var result = studentService.EditName(studentUpdateModel);
 
-            if (!result)
-            {
-                return BadRequest("Student could not be updated.");
-            }
+		[HttpGet("/get-all")]
+		public ActionResult<List<Student>> GetAll()
+		{
+			var results = studentService.GetAll();
 
-            return result;
-        }
+			return Ok(results);
+		}
 
-        [HttpPost("grades-by-course")]
-        public ActionResult<GradesByStudent> Get_CourseGrades_ByStudentId([FromBody] StudentGradesRequest request)
-        {
-            var result = studentService.GetGradesById(request.StudentId, request.CourseType);
-            return Ok(result);
-        }
+		[HttpGet("/get/{studentId}")]
+		public ActionResult<Student> GetById(int studentId)
+		{
+			var result = studentService.GetById(studentId);
 
-        [HttpGet("{classId}/class-students")]
-        public IActionResult GetClassStudents([FromRoute] int classId)
-        {
-            var results = studentService.GetClassStudents(classId);
+			if (result == null)
+			{
+				return BadRequest("Student not fount");
+			}
 
-            return Ok(results);
-        }
+			return Ok(result);
+		}
 
-        [HttpGet("grouped-students")]
-        public IActionResult GetGroupedStudents()
-        {
-            var results = studentService.GetGroupedStudents();
+		[HttpPatch("edit-name")]
+		public ActionResult<bool> GetById([FromBody] StudentUpdateDto studentUpdateModel)
+		{
+			var result = studentService.EditName(studentUpdateModel);
 
-            return Ok(results);
-        }
-    }
+			if (!result)
+			{
+				return BadRequest("Student could not be updated.");
+			}
+
+			return result;
+		}
+
+		[HttpPost("grades-by-course")]
+		public ActionResult<GradesByStudent> Get_CourseGrades_ByStudentId([FromBody] StudentGradesRequest request)
+		{
+			var result = studentService.GetGradesById(request.StudentId, request.CourseType);
+			return Ok(result);
+		}
+
+		[HttpGet("{classId}/class-students")]
+		public IActionResult GetClassStudents([FromRoute] int classId)
+		{
+			var results = studentService.GetClassStudents(classId);
+
+			return Ok(results);
+		}
+
+		[HttpGet("grouped-students")]
+		public IActionResult GetGroupedStudents()
+		{
+			var results = studentService.GetGroupedStudents();
+
+			return Ok(results);
+		}
+	}
 }

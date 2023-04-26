@@ -1,4 +1,9 @@
-﻿using DataLayer;
+﻿using Core.Dtos;
+using DataLayer;
+using DataLayer.Dtos;
+using DataLayer.Entities;
+using DataLayer.Enums;
+using DataLayer.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +14,5 @@ namespace Core.Services
 {
 	public class UserService
 	{
-		private readonly UnitOfWork unitOfWork;
-
-		public UserService(UnitOfWork unitOfWork)
-		{
-			this.unitOfWork = unitOfWork;
-		}
 	}
 }

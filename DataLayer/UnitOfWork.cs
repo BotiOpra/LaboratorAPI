@@ -5,6 +5,7 @@ namespace DataLayer
     public class UnitOfWork
     {
         public StudentsRepository Students { get; }
+        public ProfessorsRepository Professors { get; }
         public ClassRepository Classes { get; }
 		public UsersRepository Users { get; }
 
@@ -14,12 +15,14 @@ namespace DataLayer
         (
             AppDbContext dbContext,
             StudentsRepository studentsRepository,
+            ProfessorsRepository professorsRepository,
             ClassRepository classes,
             UsersRepository users
         )
         {
             _dbContext = dbContext;
             Students = studentsRepository;
+            Professors = professorsRepository;
             Classes = classes;
             Users = users;
         }
