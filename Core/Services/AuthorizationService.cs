@@ -38,7 +38,7 @@ namespace Core.Services
 			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_securityKey));
 			var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-			var roleClaim = new Claim("role", user.UserRole.Description);
+			var roleClaim = new Claim("role", user.UserRole.ToString());
 			var idClaim = new Claim("userId", user.Id.ToString());
 			var infoClaim = new Claim("username", user.Email);
 

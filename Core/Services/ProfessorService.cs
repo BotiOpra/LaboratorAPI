@@ -38,7 +38,7 @@ namespace Core.Services
 				LastName = registerData.LastName,
 				Email = registerData.Email,
 				PasswordHash = hashedPassword,
-				UserRole = new Role("Professor")
+				UserRole = Role.Professor
 			};
 
 			unitOfWork.Professors.Insert(professor);
@@ -80,6 +80,19 @@ namespace Core.Services
 			var results = unitOfWork.Professors.GetAll();
 
 			return results;
+		}
+
+		public List<GradesByStudent> GetAllStudentsGrades()
+		{
+			List<Student> allStudents = unitOfWork.Students.GetAll();
+
+			List<GradesByStudent> studentsGrades = new List<GradesByStudent>();
+			foreach(var student in allStudents)
+			{
+				studentsGrades.Add(new GradesByStudent(student));
+			}
+
+			return studentsGrades;
 		}
 
 		public ProfessorDto GetById(int professorId)

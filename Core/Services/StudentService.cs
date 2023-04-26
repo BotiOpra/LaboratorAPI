@@ -34,7 +34,7 @@ namespace Core.Services
 				Email = registerData.Email,
 				PasswordHash = hashedPassword,
 				ClassId = registerData.ClassId,
-				UserRole = new Role("Student")
+				UserRole = Role.Student
 			};
 
 			unitOfWork.Students.Insert(student);

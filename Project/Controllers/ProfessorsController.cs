@@ -2,36 +2,43 @@ using Core.Dtos;
 using Core.Services;
 using DataLayer.Dtos;
 using DataLayer.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Project.Controllers
 {
 	[ApiController]
-	[Route("api/Professors")]
+	[Route("api/professors")]
+	[Authorize]
 	public class ProfessorsController : ControllerBase
 	{
 		private ProfessorService professorService { get; set; }
+
 
 		public ProfessorsController(ProfessorService professorService)
 		{
 			this.professorService = professorService;
 		}
 
-		[HttpPost("/add")]
-		public IActionResult Add(ProfessorAddDto payload)
+		[HttpPost("/register-professor")]
+		[AllowAnonymous]
+		public IActionResult Register(ProfessorRegisterDto payload)
 		{
-			var result = professorService.AddProfessor(payload);
-
-			if (result == null)
-			{
-				return BadRequest("Professor cannot be added");
-			}
-
-			return Ok(result);
+			professorService.Register(payload);
+			return Ok();
 		}
 
+		[HttpPost("/login-professor")]
+		[AllowAnonymous]
+		public IActionResult Login(LoginDto payload)
+		{
+			var jwtToken = professorService.Validate(payload);
 
-		[HttpGet("/get-all")]
+			return Ok(new { token = jwtToken });
+		}
+
+		[HttpGet("/get-all-professors")]
 		public ActionResult<List<Professor>> GetAll()
 		{
 			var results = professorService.GetAll();
@@ -52,40 +59,11 @@ namespace Project.Controllers
 			return Ok(result);
 		}
 
-		[HttpPatch("edit-name")]
-		public ActionResult<bool> GetById([FromBody] ProfessorUpdateDto professorUpdateModel)
+		[HttpGet("/get-all-grades")]
+		public ActionResult<List<GradesByStudent>> GetAllStudentsGrades()
 		{
-			var result = professorService.EditName(professorUpdateModel);
-
-			if (!result)
-			{
-				return BadRequest("Professor could not be updated.");
-			}
-
-			return result;
-		}
-
-		[HttpPost("grades-by-course")]
-		public ActionResult<GradesByProfessor> Get_CourseGrades_ByProfessorId([FromBody] ProfessorGradesRequest request)
-		{
-			var result = professorService.GetGradesById(request.ProfessorId, request.CourseType);
+			var result = professorService.GetAllStudentsGrades();
 			return Ok(result);
-		}
-
-		[HttpGet("{classId}/class-professors")]
-		public IActionResult GetClassProfessors([FromRoute] int classId)
-		{
-			var results = professorService.GetClassProfessors(classId);
-
-			return Ok(results);
-		}
-
-		[HttpGet("grouped-professors")]
-		public IActionResult GetGroupedProfessors()
-		{
-			var results = professorService.GetGroupedProfessors();
-
-			return Ok(results);
 		}
 	}
 }
