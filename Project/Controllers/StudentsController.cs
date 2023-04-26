@@ -66,11 +66,11 @@ namespace Project.Controllers
 			return Ok("Hello students!");
 		}
 
-		[HttpGet("teacher-only")]
-		[Authorize(Roles = "Teacher")]
+		[HttpGet("professor-only")]
+		[Authorize(Roles = "Professor")]
 		public ActionResult<string> HelloTeachers()
 		{
-			return Ok("Hello teachers!");
+			return Ok("Hello professors!");
 		}
 
 
